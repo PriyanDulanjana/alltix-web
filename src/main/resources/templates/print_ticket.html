@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Ticket - #[[${booking.id}]]</title>
+  <style>
+    body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f4f4f4;
+    }
+    .ticket {
+        max-width: 600px;
+        margin: 0 auto;
+        border: 2px solid #333;
+        padding: 30px;
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2, h3 {
+        text-align: center;
+        color: #007bff;
+    }
+    .details-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px dotted #ccc;
+    }
+    .details-row:last-child {
+        border-bottom: none;
+    }
+    .label { font-weight: bold; }
+    .footer-note {
+        text-align: center;
+        margin-top: 30px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    /* Style for printing */
+    @media print {
+        body { background: none; }
+        .ticket {
+            border: none;
+            box-shadow: none;
+        }
+        .print-button {
+            display: none; /* Hide the print button when printing */
+        }
+    }
+  </style>
+</head>
+<body onload="window.print()"> <div class="ticket">
+  <img th:src="@{/images/logo.png}" alt="AllTix Logo" style="height: 50px;">
+  <h1> AllTix E-Ticket</h1>
+  <h2 th:text="${movie.title}">Movie Title</h2>
+  <h3 th:text="${'Booking ID: ' + booking.id}">Booking ID: 12345</h3>
+
+  <div class="details-row">
+    <span class="label">Date & Time:</span>
+    <span th:text="${#temporals.format(movie.showTime, 'dd MMMM yyyy HH:mm')}">01 Jan 2025 10:00</span>
+  </div>
+
+  <div class="details-row">
+    <span class="label">Location:</span>
+    <span th:text="${booking.cinema}">Cinema Name</span>
+  </div>
+
+  <div class="details-row">
+    <span class="label">Seat Type:</span>
+    <span th:text="${booking.seatType}">BALCONY</span>
+  </div>
+
+  <div class="details-row">
+    <span class="label">Tickets:</span>
+    <span th:text="${booking.numberOfTickets}">2</span>
+  </div>
+
+  <div class="details-row">
+    <span class="label">Total Paid:</span>
+    <span th:text="${'LKR' + #numbers.formatDecimal(booking.totalAmount, 0, 'COMMA', 2, 'POINT')}">$1800.00</span>
+  </div>
+
+  <div class="footer-note">
+    <p>Please arrive 30 minutes before showtime. Ticket is non-transferable.</p>
+    <p>Thank you for booking with AllTix!</p>
+  </div>
+
+  <div class="print-button" style="text-align: center; margin-top: 20px;">
+    <button onclick="window.print()">Print Ticket</button>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Cinemas - AllTix</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>AllTix Admin</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/admin/dashboard" class="nav-link">Dashboard</a>
+                <a href="/admin/cinemas" class="nav-link">Cinemas</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main>
+    <div class="container">
+        <h2>Manage Cinemas</h2>
+
+        <!-- Add Cinema Form -->
+        <div class="admin-section">
+            <h3>Add New Cinema</h3>
+            <form th:action="@{/admin/cinemas/add}" th:object="${cinema}" method="post" class="admin-form">
+                <div class="form-row">
+                    <input type="text" th:field="*{name}" placeholder="Cinema Name" required>
+                    <input type="text" th:field="*{location}" placeholder="Location" required>
+                </div>
+                <div class="form-row">
+                    <input type="text" th:field="*{city}" placeholder="City" required>
+                    <input type="text" th:field="*{contactNumber}" placeholder="Contact Number" required>
+                </div>
+                <div class="form-row">
+                    <input type="number" th:field="*{totalScreens}" placeholder="Total Screens" required>
+                    <input type="text" th:field="*{facilities}" placeholder="Facilities (comma separated)" required>
+                </div>
+                <button type="submit" class="btn-admin">Add Cinema</button>
+            </form>
+        </div>
+
+        <!-- Cinemas List -->
+        <div class="admin-section">
+            <h3>All Cinemas</h3>
+            <div class="cinemas-grid">
+                <div th:each="cinema : ${cinemas}" class="cinema-card">
+                    <div class="cinema-header">
+                        <h4 th:text="${cinema.name}"></h4>
+                        <a th:href="@{/admin/cinemas/delete/{id}(id=${cinema.id})}"
+                           class="btn-delete"
+                           onclick="return confirm('Are you sure?')">Delete</a>
+                    </div>
+                    <div class="cinema-details">
+                        <p><strong>Location:</strong> <span th:text="${cinema.location}"></span>, <span th:text="${cinema.city}"></span></p>
+                        <p><strong>Contact:</strong> <span th:text="${cinema.contactNumber}"></span></p>
+                        <p><strong>Screens:</strong> <span th:text="${cinema.totalScreens}"></span></p>
+                        <div class="cinema-facilities">
+                            <strong>Facilities:</strong>
+                            <div class="facilities-list">
+                                <span th:each="facility : ${cinema.facilities}" class="facility-badge" th:text="${facility}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

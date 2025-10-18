@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AllTix - Movie Ticket Booking</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <h2> <img th:src="@{/images/logo.png}" alt="AllTix Logo" style="height: 50px;"></h2>
+      </div>
+      <div class="nav-menu">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/about" class="nav-link">About</a>
+        <a th:if="${session.user == null}" href="/signin" class="nav-link">Sign In</a>
+        <a th:if="${session.user == null}" href="/signup" class="nav-link">Sign Up</a>
+        <a th:if="${session.user != null}" href="/user/dashboard" class="nav-link">Dashboard</a>
+        <a th:if="${session.user != null}" href="/logout" class="nav-link">Logout</a>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Welcome to AllTix</h1>
+      <p>Book your movie tickets easily and conveniently</p>
+    </div>
+  </section>
+
+  <section class="movies-section">
+    <div class="container">
+      <h2>Now Showing</h2>
+      <div class="movies-grid">
+        <div th:each="movie : ${movies}" class="movie-card">
+          <img th:src="@{${movie.posterUrl}}" th:alt="${movie.title}" class="movie-poster">
+          <div class="movie-info">
+            <h3 th:text="${movie.title}"></h3>
+            <p th:text="${movie.genre}"></p>
+            <p th:text="${'Duration: ' + movie.duration}"></p>
+            <p th:text="'Show: ' + ${#temporals.format(movie.showTime, 'MMM dd, yyyy HH:mm')}"></p>
+            <p th:text="${'Price: LKR' + movie.ticketPrice}"></p>
+            <p th:text="${'Seats: ' + movie.availableSeats}"></p>
+            <a th:href="@{/book/{id}(id=${movie.id})}" class="btn-book">Book Now</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <p>&copy; 2024 AllTix. All rights reserved.</p>
+  </div>
+</footer>
+</body>
+</html>

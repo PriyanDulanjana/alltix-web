@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Cinemas for [[${movie.title}]]</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .management-container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .linked-cinemas {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .linked-cinema-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dotted #eee;
+        }
+        .linked-cinema-item:last-child {
+            border-bottom: none;
+        }
+        .btn-remove {
+            background-color: #f44336;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .btn-back {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .add-form {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo"><h2>AllTix Admin</h2></div>
+            <div class="nav-menu">
+                <a href="/admin/dashboard" class="nav-link">Dashboard</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main>
+    <div class="container">
+        <div class="management-container">
+            <h2 th:text="'Manage Cinemas for: ' + ${movie.title}">Manage Cinemas</h2>
+
+            <div th:if="${param.success}" class="alert-success">
+                <p>Action completed successfully.</p>
+            </div>
+            <div th:if="${param.error}" class="alert-danger">
+                <p>An error occurred.</p>
+            </div>
+
+            <div th:if="${!movie.getAvailableCinemas().isEmpty()}" class="linked-cinemas">
+                <h3>Currently Linked Cinemas:</h3>
+                <div th:each="cinema : ${movie.getAvailableCinemas()}" class="linked-cinema-item">
+                    <span th:text="${cinema.name}">Cinema Name</span>
+                    <a th:href="@{/admin/movies/cinemas/remove/{movieId}/{cinemaId}(movieId=${movie.id}, cinemaId=${cinema.id})}"
+                       class="btn-remove"
+                       onclick="return confirm('Are you sure you want to unlink this cinema?')">Remove</a>
+                </div>
+            </div>
+            <div th:unless="${!movie.getAvailableCinemas().isEmpty()}" class="alert-info">
+                <p>This movie is currently not linked to any cinemas.</p>
+            </div>
+
+            <div class="add-form">
+                <h3>Link a New Cinema</h3>
+                <form th:action="@{/admin/movies/cinemas/add}" method="post">
+                    <input type="hidden" name="movieId" th:value="${movie.id}">
+
+                    <div class="form-group">
+                        <label for="cinemaId">Select Cinema to Link:</label>
+                        <select id="cinemaId" name="cinemaId" required>
+                            <option value="">-- Select Cinema --</option>
+                            <option th:each="cinema : ${unlinkedCinemas}"
+                                    th:value="${cinema.id}"
+                                    th:text="${cinema.name}"></option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary" th:if="${!unlinkedCinemas.isEmpty()}">Link Cinema</button>
+                    <p th:if="${unlinkedCinemas.isEmpty()}" class="alert-info">All cinemas are already linked to this movie.</p>
+                </form>
+            </div>
+
+            <a th:href="@{/admin/dashboard}" class="btn-back">← Back to Dashboard</a>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2024 AllTix. Admin Dashboard.</p>
+    </div>
+</footer>
+</body>
+</html>

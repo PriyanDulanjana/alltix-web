@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AllTix</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* Existing Styles... (kept for context) */
+        .btn-edit {
+            background-color: #2196F3; /* Blue color */
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        .btn-delete {
+            background-color: #f44336; /* Red color */
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 4px;
+        }
+        /* New style for View button */
+        .btn-view {
+            background-color: #4CAF50; /* Green color */
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        /* New style for Cinema Management button */
+        .btn-manage {
+            background-color: #ff9800; /* Orange color */
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        /* New general admin styles */
+        .admin-table table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .admin-table th, .admin-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .admin-table th {
+            background-color: #007bff;
+            color: white;
+        }
+        .admin-form .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .admin-form .form-row input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>AllTix Admin</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/admin/dashboard" class="nav-link">Dashboard</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main>
+    <div class="container">
+        <h2>Admin Dashboard</h2>
+
+        <div class="admin-section">
+            <h3>Add New Movie</h3>
+            <form th:action="@{/admin/movies/add}" th:object="${movie}" method="post" class="admin-form">
+                <div class="form-row">
+                    <input type="text" th:field="*{title}" placeholder="Movie Title" required>
+                    <input type="text" th:field="*{genre}" placeholder="Genre" required>
+                </div>
+                <div class="form-row">
+                    <input type="text" th:field="*{duration}" placeholder="Duration (e.g., 2h 30m)" required>
+                    <input type="text" th:field="*{language}" placeholder="Language" required>
+                </div>
+                <div class="form-row">
+                    <input type="text" th:field="*{posterUrl}" placeholder="Poster URL" required>
+                    <input type="datetime-local" name="showTimeString" required>
+                </div>
+                <div class="form-row">
+                    <input type="number" th:field="*{ticketPrice}" placeholder="Ticket Price" step="0.01" required>
+                    <input type="number" th:field="*{availableSeats}" placeholder="Available Seats" required>
+                </div>
+                <textarea th:field="*{description}" placeholder="Movie Description" required></textarea>
+                <button type="submit" class="btn-admin">Add Movie</button>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h3>Movies Management</h3>
+            <div class="admin-grid">
+                <div th:each="movie : ${movies}" class="admin-card">
+                    <img th:src="@{${movie.posterUrl}}" th:alt="${movie.title}" class="admin-poster">
+                    <div class="admin-card-content">
+                        <h4 th:text="${movie.title}"></h4>
+                        <p th:text="${movie.genre}"></p>
+                        <p th:text="${'Seats: ' + movie.availableSeats}"></p>
+                        <a th:href="@{/admin/movies/cinemas/{id}(id=${movie.id})}" class="btn-manage">Manage Cinemas</a>
+                        <a th:href="@{/admin/movies/delete/{id}(id=${movie.id})}" class="btn-delete" onclick="return confirm('Are you sure?')">Delete</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <h3>Add New Cinema Location</h3>
+            <form th:action="@{/admin/cinemas/add}" th:object="${cinema}" method="post" class="admin-form">
+                <div class="form-row">
+                    <input type="text" th:field="*{name}" placeholder="Cinema Name (e.g., PVR Cinemas)" required>
+                    <input type="text" th:field="*{location}" placeholder="Location (e.g., Phoenix Marketcity)" required>
+                </div>
+                <div class="form-row">
+                    <input type="text" th:field="*{city}" placeholder="City (e.g., Mumbai)" required>
+                    <input type="text" th:field="*{contactNumber}" placeholder="Contact Number" required>
+                </div>
+                <div class="form-row">
+                    <input type="number" th:field="*{totalScreens}" placeholder="Total Screens" required>
+                    <input type="text" name="facilitiesString" placeholder="Facilities (Comma separated: IMAX, Food Court)">
+                </div>
+                <button type="submit" class="btn-admin">Add Cinema</button>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h3>Cinema Locations Management</h3>
+            <div class="admin-table">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Location</th>
+                        <th>City</th>
+                        <th>Screens</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="cinema : ${cinemas}">
+                        <td th:text="${cinema.id}"></td>
+                        <td th:text="${cinema.name}"></td>
+                        <td th:text="${cinema.location}"></td>
+                        <td th:text="${cinema.city}"></td>
+                        <td th:text="${cinema.totalScreens}"></td>
+                        <td>
+                            <a th:href="@{/admin/cinemas/view/{id}(id=${cinema.id})}" class="btn-view">View</a>
+                            <a th:href="@{/admin/cinemas/edit/{id}(id=${cinema.id})}" class="btn-edit">Edit</a>
+                            <a th:href="@{/admin/cinemas/delete/{id}(id=${cinema.id})}" class="btn-delete" onclick="return confirm('Are you sure?')">Delete</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="admin-section">
+            <h3>Users Management</h3>
+            <div class="admin-table">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="user : ${users}">
+                        <td th:text="${user.id}"></td>
+                        <td th:text="${user.name}"></td>
+                        <td th:text="${user.email}"></td>
+                        <td th:text="${user.role}"></td>
+                        <td>
+                            <a th:href="@{/admin/users/view/{id}(id=${user.id})}" class="btn-view">View</a>
+                            <a th:href="@{/admin/users/edit/{id}(id=${user.id})}" class="btn-edit">Edit</a>
+                            <a th:href="@{/admin/users/delete/{id}(id=${user.id})}" class="btn-delete" onclick="return confirm('Are you sure?')">Delete</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <h3>Bookings Management</h3>
+            <div class="admin-table">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Movie</th>
+                        <th>Tickets</th>
+                        <th>Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="booking : ${bookings}">
+                        <td th:text="${booking.id}"></td>
+                        <td th:text="${booking.user.name}"></td>
+                        <td th:text="${booking.movie.title}"></td>
+                        <td th:text="${booking.numberOfTickets}"></td>
+                        <td th:text="${'LKR' + booking.totalAmount}"></td>
+                        <td>
+                            <a th:href="@{/admin/bookings/edit/{id}(id=${booking.id})}" class="btn-edit">Edit</a>
+                            <a th:href="@{/admin/bookings/delete/{id}(id=${booking.id})}" class="btn-delete" onclick="return confirm('Are you sure?')">Delete</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2024 AllTix. Admin Dashboard.</p>
+    </div>
+</footer>
+</body>
+</html>

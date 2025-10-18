@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Tickets - AllTix</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>AllTix</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/user/dashboard" class="nav-link">Dashboard</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main>
+    <div class="container">
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="booking-header">
+            <h2>Book Your Tickets</h2>
+            <p>Complete your booking by selecting cinema and seat type</p>
+        </div>
+
+        <div class="booking-container">
+            <div class="movie-details">
+                <img th:src="@{${movie.posterUrl}}" th:alt="${movie.title}" class="booking-poster">
+                <div class="movie-details-info">
+                    <h3 th:text="${movie.title}"></h3>
+                    <p><strong>Genre:</strong> <span th:text="${movie.genre}"></span></p>
+                    <p><strong>Duration:</strong> <span th:text="${movie.duration}"></span></p>
+                    <p><strong>Language:</strong> <span th:text="${movie.language}"></span></p>
+                    <p><strong>Show Time:</strong> <span th:text="${#temporals.format(movie.showTime, 'MMM dd, yyyy HH:mm')}"></span></p>
+                    <p><strong>Description:</strong> <span th:text="${movie.description}"></span></p>
+                </div>
+            </div>
+
+            <div class="booking-form-container">
+                <div class="booking-form-card">
+                    <h3>Booking Details</h3>
+
+                    <form th:action="@{/book}" method="post" class="booking-form">
+                        <input type="hidden" name="movieId" th:value="${movie.id}">
+
+                        <div class="form-group">
+                            <label for="cinema">Select Cinema</label>
+                            <select id="cinema" name="cinema" required class="form-select" onchange="showCinemaInfo()">
+                                <option value="">Choose a cinema...</option>
+                                <option th:each="cinema : ${cinemas}"
+                                        th:value="${cinema.name}"  th:text="${cinema.name + ' - ' + cinema.location}"> </option>
+                            </select>
+
+                            <div id="cinemaInfo" class="cinema-info" style="display: none;">
+                                <div class="cinema-details">
+                                    <h4 id="cinemaName"></h4>
+                                    <p><strong>Location:</strong> <span id="cinemaLocation"></span></p>
+                                    <p><strong>City:</strong> <span id="cinemaCity"></span></p>
+                                    <p><strong>Screens:</strong> <span id="cinemaScreens"></span></p>
+                                    <p><strong>Contact:</strong> <span id="cinemaContact"></span></p>
+                                    <div class="cinema-facilities">
+                                        <strong>Facilities:</strong>
+                                        <div id="cinemaFacilities" class="facilities-list"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="seatType">Seat Type</label>
+                            <div class="seat-options">
+                                <div th:each="seatPrice, stat : ${seatPrices}" class="seat-option">
+                                    <input type="radio"
+                                           th:id="|seat_${seatPrice.key}|"       name="seatType"
+                                           th:value="${seatPrice.key}"
+                                           th:onclick="updatePrice()"
+                                           th:checked="${stat.first}" required>
+                                    <label th:for="|seat_${seatPrice.key}|">      <span th:text="${seatPrice.key}"></span>
+                                        <span class="seat-price" th:text="'LKR' + ${seatPrice.value}"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="numberOfTickets">Number of Tickets</label>
+                            <input type="number"
+                                   id="numberOfTickets"
+                                   name="numberOfTickets"
+                                   min="1"
+                                   max="10"
+                                   value="1"
+                                   onchange="updatePrice()"
+                                   required>
+                        </div>
+
+                        <div class="price-summary">
+                            <div class="price-item">
+                                <span>Seat Price:</span>
+                                <span id="selectedSeatPrice">LKR0.00</span>
+                            </div>
+                            <div class="price-item">
+                                <span>Number of Tickets:</span>
+                                <span id="ticketCount">1</span>
+                            </div>
+                            <div class="price-total">
+                                <span><strong>Total Amount:</strong></span>
+                                <span id="totalAmount"><strong>LKR0.00</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="booking-actions">
+                            <button type="submit" class="btn-book">Confirm Booking</button>
+                            <a href="/" class="btn-cancel">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="cinema-seat-info">
+                    <div class="seat-info">
+                        <h4>Seat Layout & Pricing</h4>
+                        <div class="seat-layout-diagram">
+                            <div class="screen-area">SCREEN</div>
+
+                            <div class="seat-section executive" title="EXECUTIVE - LKR1500">
+                                EXECUTIVE (LKR1500)
+                            </div>
+                            <div class="seat-section premium" title="PREMIUM - LKR1200">
+                                PREMIUM (LKR1200)
+                            </div>
+                            <div class="seat-section balcony" title="BALCONY - LKR900">
+                                BALCONY (LKR900)
+                            </div>
+                            <div class="seat-section odc" title="ODC - LKR450">
+                                ODC (LKR450)
+                            </div>
+                        </div>
+                        <div class="seat-types-descriptions">
+                            <p><small><strong>ODC:</strong> Standard seating with great view</small></p>
+                            <p><small><strong>BALCONY:</strong> Premium balcony seating</small></p>
+                            <p><small><strong>PREMIUM:</strong> Extra comfort with more space</small></p>
+                            <p><small><strong>EXECUTIVE:</strong> Luxury seating with best view</small></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script th:inline="javascript">
+    const seatPrices = /*[[${seatPrices}]]*/ {};
+
+    // 🚨 FIX: Simplified cinema map generation to avoid nested inline blocks 🚨
+    const cinemas = {
+        <th:block th:each="cinema, stat : ${cinemas}">
+            // Ensure you only process non-null cinema objects here
+            /*[# th:if="${cinema != null}" ]*/
+            /*[[${cinema.name}]]*/: {
+                name: /*[[${cinema.name}]]*/,
+                location: /*[[${cinema.location}]]*/,
+                city: /*[[${cinema.city}]]*/,
+                contact: /*[[${cinema.contactNumber}]]*/,
+                screens: /*[[${cinema.totalScreens}]]*/,
+                // Check if facilities is null before trying to inline it
+                facilities: /*[[${cinema.facilities != null ? cinema.facilities : '[]'}]]*/
+            }
+            <th:block th:if="${!stat.last}">,</th:block>
+            /*[/]*/
+        </th:block>
+    };
+
+    /**
+     * Updates the displayed ticket price and total amount based on selection.
+     */
+    function updatePrice() {
+        // Find the currently selected seat type radio button
+        const seatType = document.querySelector('input[name="seatType"]:checked');
+        const ticketCount = parseInt(document.getElementById('numberOfTickets').value) || 1;
+
+        // Default to the price of the first seat type if none is explicitly selected (for initial load)
+        let selectedSeatValue = null;
+        if (seatType) {
+            selectedSeatValue = seatType.value;
+        } else {
+            // Fallback: If no radio is checked, try to find the value of the first radio button
+            const firstRadio = document.querySelector('input[name="seatType"]');
+            if (firstRadio) {
+                firstRadio.checked = true; // Check it so next call works
+                selectedSeatValue = firstRadio.value;
+            }
+        }
+
+
+        if (selectedSeatValue && seatPrices[selectedSeatValue]) {
+            const seatPrice = parseFloat(seatPrices[selectedSeatValue]);
+
+            if (!isNaN(seatPrice)) {
+                const totalAmount = seatPrice * ticketCount;
+
+                document.getElementById('selectedSeatPrice').textContent = 'LKR' + seatPrice.toFixed(2);
+                document.getElementById('ticketCount').textContent = ticketCount;
+                document.getElementById('totalAmount').innerHTML = '<strong>LKR' + totalAmount.toFixed(2) + '</strong>';
+            } else {
+                // Handle case where price data is invalid
+                document.getElementById('selectedSeatPrice').textContent = 'LKR0.00';
+                document.getElementById('totalAmount').innerHTML = '<strong>LKR0.00</strong>';
+            }
+        } else {
+            // Handle case where no seat type is selected or seatPrices is empty
+            document.getElementById('selectedSeatPrice').textContent = 'LKR0.00';
+            document.getElementById('totalAmount').innerHTML = '<strong>LKR0.00</strong>';
+        }
+    }
+
+    function showCinemaInfo() {
+        const cinemaSelect = document.getElementById('cinema');
+        const cinemaInfo = document.getElementById('cinemaInfo');
+        const selectedCinema = cinemas[cinemaSelect.value];
+
+        if (selectedCinema) {
+            document.getElementById('cinemaName').textContent = selectedCinema.name;
+            document.getElementById('cinemaLocation').textContent = selectedCinema.location;
+            document.getElementById('cinemaCity').textContent = selectedCinema.city;
+            document.getElementById('cinemaContact').textContent = selectedCinema.contact;
+            document.getElementById('cinemaScreens').textContent = selectedCinema.screens;
+
+            const facilitiesList = document.getElementById('cinemaFacilities');
+            facilitiesList.innerHTML = '';
+            let facilities = selectedCinema.facilities;
+            if (typeof facilities === 'string') {
+                try {
+                    facilities = JSON.parse(facilities);
+                } catch (e) {
+                    facilities = []; // Default to empty array on parse failure
+                }
+            }
+
+            if (Array.isArray(facilities)) {
+                facilities.forEach(facility => {
+                    const badge = document.createElement('span');
+                    badge.className = 'facility-badge';
+                    badge.textContent = facility;
+                    facilitiesList.appendChild(badge);
+                });
+            }
+
+            cinemaInfo.style.display = 'block';
+        } else {
+            cinemaInfo.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('numberOfTickets').addEventListener('change', updatePrice);
+        document.getElementById('numberOfTickets').addEventListener('input', updatePrice);
+
+        const seatRadios = document.querySelectorAll('input[name="seatType"]');
+        seatRadios.forEach(radio => {
+            // Re-bind the change listener (th:onclick is also fine, but adding a listener is cleaner)
+            radio.addEventListener('change', updatePrice);
+        });
+
+        // 1. Ensure the first radio is checked if none are checked.
+        const firstRadio = document.querySelector('input[name="seatType"]:first-child');
+        if (firstRadio && !document.querySelector('input[name="seatType"]:checked')) {
+             firstRadio.checked = true;
+        }
+
+        // 2. Call updatePrice() AFTER we have guaranteed a seat is checked.
+        updatePrice();
+        showCinemaInfo();
+    });
+</script>
+<script>
+    // Super simple version - test if this works
+    function updatePrice() {
+        const seatType = document.querySelector('input[name="seatType"]:checked').value;
+        const tickets = parseInt(document.getElementById('numberOfTickets').value) || 1;
+
+        const prices = {
+            "ODC": 450,
+            "BALCONY": 900,
+            "PREMIUM": 1200,
+            "EXECUTIVE": 1500
+        };
+
+        const seatPrice = prices[seatType];
+        const total = seatPrice * tickets;
+
+        document.getElementById('selectedSeatPrice').textContent = 'LKR ' + seatPrice;
+        document.getElementById('ticketCount').textContent = tickets;
+        document.getElementById('totalAmount').innerHTML = '<strong>LKR ' + total + '</strong>';
+    }
+
+    // Simple initialization
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[name="seatType"]').forEach(radio => {
+            radio.addEventListener('change', updatePrice);
+        });
+        document.getElementById('numberOfTickets').addEventListener('input', updatePrice);
+        updatePrice(); // Initial calculation
+    });
+</script>
+</body>
+</html>

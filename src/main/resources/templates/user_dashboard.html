@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - AllTix</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* Existing Styles... */
+        .welcome-message {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .no-bookings {
+            padding: 20px;
+            background-color: #f8f8f8;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .admin-table table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .admin-table th, .admin-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .admin-table th {
+            background-color: #007bff;
+            color: white;
+        }
+        .admin-table .btn-info {
+            background-color: #6c757d; /* Neutral gray for secondary action */
+            color: white;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-right: 5px;
+            display: inline-block;
+            font-size: 0.9em;
+        }
+        .admin-table .btn-primary {
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+            display: inline-block;
+            font-size: 0.9em;
+        }
+        .btn-primary {
+             background-color: #007bff;
+        }
+
+        /* 🚨 NEW MODAL STYLES 🚨 */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; /* 10% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-width: 600px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-body p {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>AllTix</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/user/dashboard" class="nav-link">Dashboard</a>
+                <a href="/logout" class="nav-link">Logout</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main>
+    <div class="container">
+        <h2 class="welcome-message">Your Dashboard</h2>
+        <p th:if="${user}" th:text="${'Welcome back, ' + user.name + '!'}" class="welcome-message"></p>
+
+        <div class="admin-section">
+            <h3>Your Recent Reservations</h3>
+
+            <div th:if="${#lists.isEmpty(bookings)}" class="no-bookings">
+                <p>You have no current movie bookings.</p>
+                <a href="/" class="btn-primary">Browse Movies</a>
+            </div>
+
+            <div class="admin-table" th:if="${not #lists.isEmpty(bookings)}">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Movie Title</th>
+                        <th>Cinema</th>
+                        <th>Seats</th>
+                        <th>Total Paid</th>
+                        <th>Booking Time</th>
+                        <th>Actions</th> </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="booking : ${bookings}">
+                        <td th:text="${booking.id}"></td>
+                        <td th:text="${booking.movie.title}"></td>
+                        <td th:text="${booking.cinema}"></td>
+                        <td th:text="${booking.numberOfTickets}"></td>
+                        <td th:text="${'LKR' + #numbers.formatDecimal(booking.totalAmount, 0, 'COMMA', 2, 'POINT')}"></td>
+                        <td th:text="${#temporals.format(booking.bookingTime, 'dd-MMM-yyyy HH:mm')}"></td>
+
+                        <td>
+                            <a href="#" th:data-booking-id="${booking.id}" class="btn-info view-ticket-btn">View Ticket</a>
+
+                            <a th:href="@{/user/booking/print/{id}(id=${booking.id})}" target="_blank" class="btn-primary">Print Ticket</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="ticketModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3 id="modalTitle">Ticket Details</h3>
+        <div class="modal-body">
+            <p><strong>Booking ID:</strong> <span id="modalBookingId"></span></p>
+            <p><strong>Movie:</strong> <span id="modalMovieTitle"></span></p>
+            <p><strong>Showtime:</strong> <span id="modalShowtime"></span></p>
+            <p><strong>Cinema:</strong> <span id="modalCinema"></span></p>
+            <p><strong>Seat Type:</strong> <span id="modalSeatType"></span></p>
+            <p><strong>Tickets:</strong> <span id="modalNumberOfTickets"></span></p>
+            <p><strong>Total Paid:</strong> <span id="modalTotalAmount"></span></p>
+            <p><strong>Booked On:</strong> <span id="modalBookingTime"></span></p>
+        </div>
+    </div>
+</div>
+<footer>
+    <div class="container">
+        <p>&copy; 2024 AllTix. User Dashboard.</p>
+    </div>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('ticketModal');
+        const closeBtn = document.querySelector('.close-btn');
+        const viewButtons = document.querySelectorAll('.view-ticket-btn');
+
+        // Function to close the modal
+        closeBtn.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // Close modal when user clicks anywhere outside of the modal
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // Handle 'View Ticket' button click
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault(); // Stop the default anchor link action (redirect)
+                const bookingId = this.getAttribute('data-booking-id');
+
+                // 1. AJAX CALL TO FETCH DATA
+                fetch('/api/booking/' + bookingId) // 🚨 NOTE: You MUST create this API endpoint in MainController
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Booking not found or access denied.');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 2. Populate Modal Content
+                        document.getElementById('modalBookingId').textContent = data.id;
+                        document.getElementById('modalMovieTitle').textContent = data.movie.title;
+
+                        // Assuming you have a showtime field or can derive it from bookingTime
+                        // For simplicity, we use a formatted bookingTime here. If you have a separate showtime field, use that.
+                        const bookingDateTime = new Date(data.bookingTime);
+                        document.getElementById('modalShowtime').textContent = bookingDateTime.toLocaleDateString() + ' ' + bookingDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                        document.getElementById('modalCinema').textContent = data.cinema;
+                        document.getElementById('modalSeatType').textContent = data.seatType;
+                        document.getElementById('modalNumberOfTickets').textContent = data.numberOfTickets;
+                        document.getElementById('modalTotalAmount').textContent = 'LKR' + data.totalAmount.toFixed(2);
+                        document.getElementById('modalBookingTime').textContent = bookingDateTime.toLocaleString();
+
+
+                        // 3. Display the Modal
+                        modal.style.display = "block";
+                    })
+                    .catch(error => {
+                        console.error('Error fetching ticket data:', error);
+                        alert('Could not retrieve ticket details. Check server log.');
+                    });
+            });
+        });
+    });
+</script>
+</body>
+</html>
